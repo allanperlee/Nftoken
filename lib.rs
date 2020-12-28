@@ -27,6 +27,10 @@ mod erc721 {
         owned_tokens_count: StorageHashMap<AccountId, u32>,
         /// Mapping from owner to operator approvals.
         operator_approvals: StorageHashMap<(AccountId, AccountId), bool>,
+        //Mapping stats to owner
+        victories: StorageHashMap<AccountId, u32>,
+        //Mapping losses to owner
+        losses: StorageHashMap<AccountId, u32>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq, Eq, Copy, Clone)]
@@ -85,6 +89,8 @@ mod erc721 {
                 token_approvals: Default::default(),
                 owned_tokens_count: Default::default(),
                 operator_approvals: Default::default(),
+                victories: Default::default(),
+                losses: Default::default(),
             }
         }
 
@@ -94,6 +100,17 @@ mod erc721 {
         #[ink(message)]
         pub fn balance_of(&self, owner: AccountId) -> u32 {
             self.balance_of_or_zero(&owner)
+        }
+
+        //Returns the victories for an account
+        #[ink(message)]
+        pub fn victories_count(&self, owner: AccountId) -> u32 {
+            self.victories_of_or_zero(&owner)
+        }
+
+        #[ink(message)]
+        pub fn losses_count(&self, owner: AccountId) -> u32 {
+            self.losses_of_or_zero(&owner)
         }
 
         /// Returns the owner of the token.
@@ -182,6 +199,7 @@ mod erc721 {
                 Entry::Vacant(_) => return Err(Error::TokenNotFound),
                 Entry::Occupied(occupied) => occupied,
             };
+            //If the occupying token does not match the reference to the caller, error returns
             if occupied.get() != &caller {
                 return Err(Error::NotOwner)
             };
@@ -329,6 +347,16 @@ mod erc721 {
         // Returns the total number of tokens from an account.
         fn balance_of_or_zero(&self, of: &AccountId) -> u32 {
             *self.owned_tokens_count.get(of).unwrap_or(&0)
+        }
+
+        //Returns the victories from an account
+        fn victories_of_or_zero(&self, of: &AccountId) -> u32 {
+            *self.victories.get(of).unwrap_or(&0)
+        }
+
+        ///Returns the losses from an account
+        fn losses_of_or_zero(&self, of: &AccountId) -> u32 {
+            *self.losses.get(of).unwrap_or(&0)
         }
 
         /// Gets an operator on other Account's behalf.
