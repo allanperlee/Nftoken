@@ -119,6 +119,12 @@ mod erc721 {
         pub fn owner_of(&self, id: TokenId) -> Option<AccountId> {
             self.token_owner.get(&id).cloned()
         }
+        
+        ///Prototype for the actions a player can execute against another player
+        #[ink(message, payable)]
+        pub fn attack(&mut self, to: TokenId) -> bool {
+            self.add_loss(to)
+        }
 
         /// Returns the approved account ID for this token if any.
         #[ink(message)]
