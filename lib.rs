@@ -13,6 +13,7 @@ mod erc721 {
         Decode,
         Encode,
     };
+    use core::convert::TryInto;
 
     /// A token ID.
     pub type TokenId = u32;
@@ -28,9 +29,9 @@ mod erc721 {
         /// Mapping from owner to operator approvals.
         operator_approvals: StorageHashMap<(AccountId, AccountId), bool>,
         //Mapping stats to owner
-        victories: StorageHashMap<AccountId, u32>,
+        victories: StorageHashMap<TokenId, u32>,
         //Mapping losses to owner
-        losses: StorageHashMap<AccountId, u32>,
+        losses: StorageHashMap<TokenId, u32>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq, Eq, Copy, Clone)]
@@ -104,12 +105,12 @@ mod erc721 {
 
         //Returns the victories for an account
         #[ink(message)]
-        pub fn victories_count(&self, owner: AccountId) -> u32 {
+        pub fn victories_count(&self, owner: TokenId) -> u64 {
             self.victories_of_or_zero(&owner)
         }
 
         #[ink(message)]
-        pub fn losses_count(&self, owner: AccountId) -> u32 {
+        pub fn losses_count(&self, owner: TokenId) -> u64 {
             self.losses_of_or_zero(&owner)
         }
 
@@ -212,6 +213,7 @@ mod erc721 {
             });
             Ok(())
         }
+        
 
         //Private functions
         /// Transfers token `id` `from` the sender to the `to` AccountId.
@@ -238,6 +240,7 @@ mod erc721 {
             });
             Ok(())
         }
+
 
         /// Removes token `id` from the owner.
         fn remove_token_from(
@@ -350,13 +353,13 @@ mod erc721 {
         }
 
         //Returns the victories from an account
-        fn victories_of_or_zero(&self, of: &AccountId) -> u32 {
-            *self.victories.get(of).unwrap_or(&0)
+        fn victories_of_or_zero(&self, of: &TokenId) -> u64 {
+            (*self.victories.get(of).unwrap_or(&0)).into()
         }
 
         ///Returns the losses from an account
-        fn losses_of_or_zero(&self, of: &AccountId) -> u32 {
-            *self.losses.get(of).unwrap_or(&0)
+        fn losses_of_or_zero(&self, of: &TokenId) -> u64 {
+            (*self.losses.get(of).unwrap_or(&0)).into()
         }
 
         /// Gets an operator on other Account's behalf.
@@ -383,6 +386,13 @@ mod erc721 {
         /// Returns true if token `id` exists or false if it does not.
         fn exists(&self, id: TokenId) -> bool {
             self.token_owner.get(&id).is_some() && self.token_owner.contains_key(&id)
+        }
+        
+        ///Will be inherited inside another function that executes this stat change
+        fn add_loss(&mut self, id: TokenId) -> bool {
+            let losses_count = self.losses_count(id);
+            self.losses.insert(id, (losses_count + 1).try_into().unwrap());
+            true
         }
     }
 
