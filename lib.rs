@@ -99,7 +99,6 @@ mod erc721 {
         }
 
         /// Returns the balance of the owner.
-        ///
         /// This represents the amount of unique tokens the owner has.
         #[ink(message)]
         pub fn balance_of(&self, owner: AccountId) -> u32 {
@@ -116,8 +115,7 @@ mod erc721 {
         pub fn losses_count(&self, owner: TokenId) -> u64 {
             self.losses_of_or_zero(&owner)
         }
-        
-
+        ///Getter of credibility status
         #[ink(message)]
         pub fn is_credible(&self, token: TokenId) -> bool {
             self.credible(token)
@@ -131,8 +129,18 @@ mod erc721 {
         
         ///Prototype for the actions a player can execute against another player
         #[ink(message, payable)]
-        pub fn attack(&mut self, to: TokenId) -> bool {
+        pub fn attack(&mut self, from: TokenId, to: TokenId) -> bool {
             self.add_loss(to);
+            self.add_victory(from);     
+            true
+        }
+
+        ///Token must contain more than 4 victories
+        #[ink(message, payable)]
+        pub fn get_credibility(&mut self, id: TokenId) -> bool {
+            if self.victories_count(id) > 4 {    
+                self.credibility.insert(id, true);  
+            } 
             true
         }
 
@@ -363,6 +371,7 @@ mod erc721 {
             }
         }
 
+        ///is_credible on line 120 inherits this
         fn credible(&self, token: TokenId) -> bool {
             *self
                 .credibility
@@ -412,9 +421,15 @@ mod erc721 {
         }
         
         ///Will be inherited inside another function that executes this stat change
+        ///along with add_victory
         fn add_loss(&mut self, id: TokenId) -> bool {
             let losses_count = self.losses_count(id);
             self.losses.insert(id, (losses_count + 1).try_into().unwrap());
+            true
+        }
+        fn add_victory(&mut self, id: TokenId) -> bool {
+            let victories_count = self.victories_count(id);
+            self.victories.insert(id, (victories_count + 1).try_into().unwrap());
             true
         }
 
