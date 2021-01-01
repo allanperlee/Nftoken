@@ -32,6 +32,8 @@ mod erc721 {
         victories: StorageHashMap<TokenId, u32>,
         //Mapping losses to owner
         losses: StorageHashMap<TokenId, u32>,
+        ///Credibility gained if 'true'
+        credibility: StorageHashMap<TokenId, bool>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq, Eq, Copy, Clone)]
@@ -92,6 +94,7 @@ mod erc721 {
                 operator_approvals: Default::default(),
                 victories: Default::default(),
                 losses: Default::default(),
+                credibility: Default::default(),
             }
         }
 
@@ -103,15 +106,21 @@ mod erc721 {
             self.balance_of_or_zero(&owner)
         }
 
-        //Returns the victories for an account
+        //Returns the victories for an token
         #[ink(message)]
         pub fn victories_count(&self, owner: TokenId) -> u64 {
             self.victories_of_or_zero(&owner)
         }
-
+        ///Returns the losses for a token
         #[ink(message)]
         pub fn losses_count(&self, owner: TokenId) -> u64 {
             self.losses_of_or_zero(&owner)
+        }
+        
+
+        #[ink(message)]
+        pub fn is_credible(&self, token: TokenId) -> bool {
+            self.credible(token)
         }
 
         /// Returns the owner of the token.
@@ -123,7 +132,8 @@ mod erc721 {
         ///Prototype for the actions a player can execute against another player
         #[ink(message, payable)]
         pub fn attack(&mut self, to: TokenId) -> bool {
-            self.add_loss(to)
+            self.add_loss(to);
+            true
         }
 
         /// Returns the approved account ID for this token if any.
@@ -353,6 +363,13 @@ mod erc721 {
             }
         }
 
+        fn credible(&self, token: TokenId) -> bool {
+            *self
+                .credibility
+                .get(&token)
+                .unwrap_or(&false)
+        }
+
         // Returns the total number of tokens from an account.
         fn balance_of_or_zero(&self, of: &AccountId) -> u32 {
             *self.owned_tokens_count.get(of).unwrap_or(&0)
@@ -400,6 +417,8 @@ mod erc721 {
             self.losses.insert(id, (losses_count + 1).try_into().unwrap());
             true
         }
+
+    
     }
 
     fn decrease_counter_of(
@@ -442,6 +461,8 @@ mod erc721 {
             assert_eq!(erc721.mint(1), Ok(()));
             // Alice owns 1 token.
             assert_eq!(erc721.balance_of(accounts.alice), 1);
+            //Checking getter for credibility and the default bool, works as intended for token id 1
+            assert_eq!(erc721.is_credible(1), false);
         }
 
         #[ink::test]
