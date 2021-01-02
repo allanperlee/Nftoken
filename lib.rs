@@ -14,6 +14,8 @@ mod erc721 {
         Encode,
     };
     use core::convert::TryInto;
+    ///use rand::rngs::OsRng;                          /// will continue to implement RNG; 
+    
 
     /// A token ID.
     pub type TokenId = u32;
@@ -433,7 +435,6 @@ mod erc721 {
             true
         }
 
-    
     }
 
     fn decrease_counter_of(

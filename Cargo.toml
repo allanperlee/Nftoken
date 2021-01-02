@@ -1,8 +1,9 @@
 [package]
 name = "nft"
 version = "0.1.0"
-authors = ["[your_name] <[your_email]>"]
+authors = ["Allan allanperlee@hotmail.com"]
 edition = "2018"
+
 
 [dependencies]
 ink_primitives = { version = "3.0.0-rc2", default-features = false }
@@ -24,6 +25,7 @@ crate-type = [
 
 [features]
 default = ["std"]
+
 std = [
     "ink_metadata/std",
     "ink_env/std",
