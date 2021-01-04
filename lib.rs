@@ -34,8 +34,15 @@ mod erc721 {
         victories: StorageHashMap<TokenId, u32>,
         //Mapping losses to owner
         losses: StorageHashMap<TokenId, u32>,
-        ///Credibility gained if 'true'
-        credibility: StorageHashMap<TokenId, bool>,
+        ///The heirarchy of angels from penultimate status to highest
+        archangel: StorageHashMap<TokenId, bool>,
+        principality: StorageHashMap<TokenId, bool>,
+        power: StorageHashMap<TokenId, bool>,
+        virtue: StorageHashMap<TokenId, bool>,
+        dominion: StorageHashMap<TokenId, bool>,
+        throne: StorageHashMap<TokenId, bool>,
+        cherubim: StorageHashMap<TokenId, bool>,
+        seraphim: StorageHashMap<TokenId, bool>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq, Eq, Copy, Clone)]
@@ -96,7 +103,14 @@ mod erc721 {
                 operator_approvals: Default::default(),
                 victories: Default::default(),
                 losses: Default::default(),
-                credibility: Default::default(),
+                archangel: Default::default(),
+                principality: Default::default(),
+                power: Default::default(),
+                virtue: Default::default(),
+                dominion: Default::default(),
+                throne: Default::default(),
+                cherubim: Default::default(),
+                seraphim: Default::default(),
             }
         }
 
@@ -119,8 +133,8 @@ mod erc721 {
         }
         ///Getter of credibility status
         #[ink(message)]
-        pub fn is_credible(&self, token: TokenId) -> bool {
-            self.credible(token)
+        pub fn is_archangel(&self, token: TokenId) -> bool {
+            self.archangel(token)
         }
 
         /// Returns the owner of the token.
@@ -139,9 +153,9 @@ mod erc721 {
 
         ///Token must contain more than 4 victories
         #[ink(message, payable)]
-        pub fn get_credibility(&mut self, id: TokenId) -> bool {
+        pub fn get_rank(&mut self, id: TokenId) -> bool {
             if self.victories_count(id) > 4 {    
-                self.credibility.insert(id, true);  
+                self.archangel.insert(id, true);  
             } 
             true
         }
@@ -373,13 +387,14 @@ mod erc721 {
             }
         }
 
-        ///is_credible on line 120 inherits this
-        fn credible(&self, token: TokenId) -> bool {
+        ///is_archangel on line 120 inherits this
+        fn archangel(&self, token: TokenId) -> bool {
             *self
-                .credibility
+                .archangel
                 .get(&token)
                 .unwrap_or(&false)
         }
+
 
         // Returns the total number of tokens from an account.
         fn balance_of_or_zero(&self, of: &AccountId) -> u32 {
