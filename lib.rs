@@ -14,8 +14,6 @@ mod erc721 {
         Encode,
     };
     use core::convert::TryInto;
-    ///use rand::rngs::OsRng;                          /// will continue to implement RNG; 
-    
 
     /// A token ID.
     pub type TokenId = u32;
@@ -91,6 +89,14 @@ mod erc721 {
         approved: bool,
     }
 
+    #[ink(event)]
+    pub struct Ascension {
+        #[ink(topic)]
+        token: TokenId,
+        #[ink(topic)]
+        victories: u32,
+    }
+
     ///Public functions
     impl Erc721 {
         /// Creates a new ERC721 token contract.
@@ -131,10 +137,38 @@ mod erc721 {
         pub fn losses_count(&self, owner: TokenId) -> u64 {
             self.losses_of_or_zero(&owner)
         }
-        ///Getter of credibility status
+        ///Getters of credibility status
         #[ink(message)]
         pub fn is_archangel(&self, token: TokenId) -> bool {
             self.archangel(token)
+        }
+        #[ink(message)]
+        pub fn is_principality(&self, token: TokenId) -> bool {
+            self.principality(token)
+        }
+        #[ink(message)]
+        pub fn is_power(&self, token: TokenId) -> bool {
+            self.power(token)
+        }
+        #[ink(message)]
+        pub fn is_virtue(&self, token: TokenId) -> bool {
+            self.virtue(token)
+        }
+        #[ink(message)]
+        pub fn is_dominion(&self, token: TokenId) -> bool {
+            self.dominion(token)
+        }
+        #[ink(message)]
+        pub fn is_throne(&self, token:TokenId) -> bool {
+            self.throne(token)
+        }
+        #[ink(message)]
+        pub fn is_cherubim(&self, token: TokenId) -> bool {
+            self.cherubim(token)
+        }
+        #[ink(message)]
+        pub fn is_seraphim(&self, token: TokenId) -> bool {
+            self.seraphim(token)
         }
 
         /// Returns the owner of the token.
@@ -387,14 +421,30 @@ mod erc721 {
             }
         }
 
-        ///is_archangel on line 120 inherits this
         fn archangel(&self, token: TokenId) -> bool {
-            *self
-                .archangel
-                .get(&token)
-                .unwrap_or(&false)
+            *self.archangel.get(&token).unwrap_or(&false)
         }
-
+        fn principality(&self, token: TokenId) -> bool {
+            *self.principality.get(&token).unwrap_or(&false)
+        }
+        fn power(&self, token: TokenId) -> bool {
+            *self.power.get(&token).unwrap_or(&false)
+        }
+        fn virtue(&self, token: TokenId) -> bool {
+            *self.virtue.get(&token).unwrap_or(&false)
+        }
+        fn dominion(&self, token: TokenId) -> bool {
+            *self.dominion.get(&token).unwrap_or(&false)
+        }
+        fn throne(&self, token: TokenId) -> bool {
+            *self.throne.get(&token).unwrap_or(&false)
+        }
+        fn cherubim(&self, token: TokenId) -> bool {
+            *self.cherubim.get(&token).unwrap_or(&false)
+        }
+        fn seraphim(&self, token: TokenId) -> bool {
+            *self.seraphim.get(&token).unwrap_or(&false)
+        }
 
         // Returns the total number of tokens from an account.
         fn balance_of_or_zero(&self, of: &AccountId) -> u32 {
