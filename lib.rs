@@ -94,7 +94,7 @@ mod erc721 {
         #[ink(topic)]
         token: TokenId,
         #[ink(topic)]
-        victories: u32,
+        victories: u64,
     }
 
     ///Public functions
@@ -200,6 +200,10 @@ mod erc721 {
                 512 => self.seraphim.insert(id, true),
                 _ => return Err(Error::NotAllowed),
             };
+            self.env().emit_event(Ascension {
+                token: id,
+                victories: vict_count,
+            });
             Ok(())
         }
 
