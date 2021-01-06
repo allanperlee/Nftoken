@@ -187,11 +187,20 @@ mod erc721 {
 
         ///Token must contain more than 4 victories
         #[ink(message, payable)]
-        pub fn get_rank(&mut self, id: TokenId) -> bool {
-            if self.victories_count(id) > 4 {    
-                self.archangel.insert(id, true);  
-            } 
-            true
+        pub fn get_rank(&mut self, id: TokenId) -> Result<(), Error> {
+            let vict_count = self.victories_count(id);
+            match vict_count {
+                4 => self.archangel.insert(id, true),
+                8 => self.principality.insert(id, true),
+                16 => self.power.insert(id, true),
+                32 => self.virtue.insert(id, true),
+                64 => self.dominion.insert(id, true),
+                128 => self.throne.insert(id, true),
+                256 => self.cherubim.insert(id, true),
+                512 => self.seraphim.insert(id, true),
+                _ => return Err(Error::NotAllowed),
+            };
+            Ok(())
         }
 
         /// Returns the approved account ID for this token if any.
