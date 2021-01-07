@@ -207,6 +207,20 @@ mod erc721 {
             Ok(())
         }
 
+        #[ink(message, payable)]
+        pub fn erase_loss(&mut self, id: TokenId) -> Result<(), Error> {
+            let vict_count = self.victories_count(id);
+            if vict_count < 64 {
+                return Err(Error::NotAllowed)
+            };
+            let Self {
+                losses,
+                ..
+            } = self;
+            decrease_counter_of_tokenid(losses, id)?;
+            Ok(())
+        }
+
         /// Returns the approved account ID for this token if any.
         #[ink(message)]
         pub fn get_approved(&self, id: TokenId) -> Option<AccountId> {
@@ -520,6 +534,15 @@ mod erc721 {
         of: &AccountId,
     ) -> Result<(), Error> {
         let count = (*hmap).get_mut(of).ok_or(Error::CannotFetchValue)?;
+        *count -= 1;
+        Ok(())
+    }
+
+    fn decrease_counter_of_tokenid(
+        hmap: &mut StorageHashMap<TokenId, u32>,
+        token: TokenId
+    ) -> Result<(), Error> {
+        let count = (*hmap).get_mut(&token).ok_or(Error::CannotFetchValue)?;
         *count -= 1;
         Ok(())
     }
