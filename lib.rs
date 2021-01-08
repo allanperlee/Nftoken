@@ -14,6 +14,7 @@ mod erc721 {
         Encode,
     };
     use core::convert::TryInto;
+    use core::time::Duration;
 
     /// A token ID.
     pub type TokenId = u32;
@@ -32,6 +33,8 @@ mod erc721 {
         victories: StorageHashMap<TokenId, u32>,
         //Mapping losses to owner
         losses: StorageHashMap<TokenId, u32>,
+        ///Stores the time added with one day to delay the use of certain public functions
+        ready_time: StorageHashMap<AccountId, u32>,
         ///The heirarchy of angels from penultimate status to highest
         archangel: StorageHashMap<TokenId, bool>,
         principality: StorageHashMap<TokenId, bool>,
@@ -109,6 +112,7 @@ mod erc721 {
                 operator_approvals: Default::default(),
                 victories: Default::default(),
                 losses: Default::default(),
+                ready_time: Default::default(),
                 archangel: Default::default(),
                 principality: Default::default(),
                 power: Default::default(),
@@ -187,7 +191,7 @@ mod erc721 {
 
         ///Token must contain more than 4 victories
         #[ink(message, payable)]
-        pub fn get_rank(&mut self, id: TokenId) -> Result<(), Error> {
+        pub fn ascend(&mut self, id: TokenId) -> Result<(), Error> {
             let vict_count = self.victories_count(id);
             match vict_count {
                 4 => self.archangel.insert(id, true),
@@ -526,8 +530,14 @@ mod erc721 {
             self.victories.insert(id, (victories_count + 1).try_into().unwrap());
             true
         }
+        
+        fn a_day(day: u32) -> Duration {
+            let day = Duration::new(day.into(), 0);
+            return day
+        }
 
     }
+
 
     fn decrease_counter_of(
         hmap: &mut StorageHashMap<AccountId, u32>,
