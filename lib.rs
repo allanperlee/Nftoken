@@ -14,9 +14,7 @@ mod erc721 {
         Encode,
     };
     use core::convert::TryInto;
-    use core::time::Duration;
 
-    /// A token ID.
     pub type TokenId = u32;
 
    #[ink(storage)]
@@ -34,7 +32,7 @@ mod erc721 {
         //Mapping losses to owner
         losses: StorageHashMap<TokenId, u32>,
         ///Stores the time added with one day to delay the use of certain public functions
-        ready_time: StorageHashMap<AccountId, u32>,
+        ready_time: StorageHashMap<AccountId, BlockNumber>,
         ///The heirarchy of angels from penultimate status to highest
         archangel: StorageHashMap<TokenId, bool>,
         principality: StorageHashMap<TokenId, bool>,
@@ -529,11 +527,6 @@ mod erc721 {
             let victories_count = self.victories_count(id);
             self.victories.insert(id, (victories_count + 1).try_into().unwrap());
             true
-        }
-        
-        fn a_day(day: u32) -> Duration {
-            let day = Duration::new(day.into(), 0);
-            return day
         }
 
     }
