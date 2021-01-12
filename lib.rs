@@ -223,6 +223,18 @@ mod erc721 {
             Ok(())
         }
 
+        ///Seraphims can remove the status of archangels to simple angels
+        #[ink(message, payable)]
+        pub fn relegate_archangel(&mut self, id: TokenId, to: TokenId) -> Result<(), Error> {
+            let value = self.is_seraphim(id);
+            let is_arch = self.is_archangel(to);
+            if value == false && is_arch == false{
+                return Err(Error::NotAllowed)
+            };
+            self.archangel.entry(to).or_insert(false);
+            Ok(())
+        }
+
         /// Returns the approved account ID for this token if any.
         #[ink(message)]
         pub fn get_approved(&self, id: TokenId) -> Option<AccountId> {
@@ -528,9 +540,7 @@ mod erc721 {
             self.victories.insert(id, (victories_count + 1).try_into().unwrap());
             true
         }
-
     }
-
 
     fn decrease_counter_of(
         hmap: &mut StorageHashMap<AccountId, u32>,
