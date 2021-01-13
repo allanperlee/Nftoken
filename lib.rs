@@ -17,7 +17,7 @@ mod erc721 {
 
     pub type TokenId = u32;
 
-   #[ink(storage)]
+    #[ink(storage)]
     pub struct Erc721 {
         /// Mapping from token to owner.
         token_owner: StorageHashMap<TokenId, AccountId>,
@@ -228,7 +228,7 @@ mod erc721 {
         pub fn relegate_archangel(&mut self, id: TokenId, to: TokenId) -> Result<(), Error> {
             let value = self.is_seraphim(id);
             let is_arch = self.is_archangel(to);
-            if value == false && is_arch == false{
+            if value == false || is_arch == false{
                 return Err(Error::NotAllowed)
             };
             self.archangel.entry(to).or_insert(false);
@@ -290,7 +290,7 @@ mod erc721 {
         }
 
         /// Creates a new token.
-        #[ink(message)]
+        #[ink(message, payable)]
         pub fn mint(&mut self, id: TokenId) -> Result<(), Error> {
             let caller = self.env().caller();
             self.add_token_to(&caller, id)?;
@@ -540,6 +540,15 @@ mod erc721 {
             self.victories.insert(id, (victories_count + 1).try_into().unwrap());
             true
         }
+
+        ///Checks if the current block number is past the previous 7200 blocks
+        ///Will be used as a time limit roughly equivalent to 24 hours
+        fn above_limit(&mut self, natural: u32, _block: BlockNumber) -> bool {
+            let limit: BlockNumber = natural.into();
+            let current_block = self.env().block_number();
+            return current_block > limit;
+        }
+
     }
 
     fn decrease_counter_of(
