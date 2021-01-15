@@ -31,7 +31,7 @@ mod erc721 {
         victories: StorageHashMap<TokenId, u32>,
         //Mapping losses to owner
         losses: StorageHashMap<TokenId, u32>,
-        ///Stores the time added with one day to delay the use of certain public functions
+        ///Stores the time (block number) added with one day (7200 blocks) to delay the use of certain public functions
         ready_time: StorageHashMap<AccountId, BlockNumber>,
         ///The heirarchy of angels from penultimate status to highest
         archangel: StorageHashMap<TokenId, bool>,
@@ -171,6 +171,9 @@ mod erc721 {
         #[ink(message)]
         pub fn is_seraphim(&self, token: TokenId) -> bool {
             self.seraphim(token)
+        }
+        pub fn is_ready(&self, account: AccountId) -> BlockNumber {
+            self.ready(account)
         }
 
         /// Returns the owner of the token.
@@ -486,6 +489,9 @@ mod erc721 {
         fn seraphim(&self, token: TokenId) -> bool {
             *self.seraphim.get(&token).unwrap_or(&false)
         }
+        fn ready(&self, account: AccountId) -> BlockNumber {
+            *self.ready_time.get(&account).unwrap_or(&0)
+        }
 
         // Returns the total number of tokens from an account.
         fn balance_of_or_zero(&self, of: &AccountId) -> u32 {
@@ -541,12 +547,20 @@ mod erc721 {
             true
         }
 
-        ///Checks if the current block number is past the previous 7200 blocks
-        ///Will be used as a time limit roughly equivalent to 24 hours
-        fn above_limit(&mut self, natural: u32, _block: BlockNumber) -> bool {
-            let limit: BlockNumber = natural.into();
+        ///Adds the current block number plus a certin number of blocks to the ready_time map
+        fn add_limit(&mut self, id: AccountId, natural: u32) -> Result<(), Error> {
+            let blocked_natural: BlockNumber = natural.into();
             let current_block = self.env().block_number();
-            return current_block > limit;
+            let limit: BlockNumber = blocked_natural + current_block;
+            self.ready_time.insert(id, limit);
+            Ok(())
+        }
+        ///Checks the account id's respective block number in ready_time map
+        ///if a certain number of blocks have passed
+        fn is_account_allowed(&mut self, id: AccountId) -> bool {
+            let current_block = self.env().block_number();
+            let last_block = self.is_ready(id);
+            return last_block > current_block
         }
 
     }
