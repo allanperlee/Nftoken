@@ -184,15 +184,24 @@ mod erc721 {
         
         ///Prototype for the actions a player can execute against another player
         #[ink(message, payable)]
-        pub fn attack(&mut self, from: TokenId, to: TokenId) -> bool {
+        pub fn attack(&mut self, from: TokenId, to: TokenId) -> Result<(), Error> {
+            let caller = self.env().caller();
+            if self.is_account_allowed(caller) == false {
+                return Err(Error::NotAllowed)
+            };
             self.add_loss(to);
-            self.add_victory(from);     
-            true
+            self.add_victory(from);
+            self.add_limit(caller, 7200);     
+            Ok(())
         }
 
         ///Token must contain more than 4 victories
         #[ink(message, payable)]
         pub fn ascend(&mut self, id: TokenId) -> Result<(), Error> {
+            let caller = self.env().caller();
+            if self.is_account_allowed(caller) == false {
+                return Err(Error::NotAllowed)
+            };
             let vict_count = self.victories_count(id);
             match vict_count {
                 4 => self.archangel.insert(id, true),
@@ -209,11 +218,16 @@ mod erc721 {
                 token: id,
                 victories: vict_count,
             });
+            self.add_limit(caller, 7200);
             Ok(())
         }
 
         #[ink(message, payable)]
         pub fn erase_loss(&mut self, id: TokenId) -> Result<(), Error> {
+            let caller = self.env().caller();
+            if self.is_account_allowed(caller) == false {
+                return Err(Error::NotAllowed)
+            };
             let vict_count = self.victories_count(id);
             if vict_count < 64 {
                 return Err(Error::NotAllowed)
@@ -223,18 +237,24 @@ mod erc721 {
                 ..
             } = self;
             decrease_counter_of_tokenid(losses, id)?;
+            self.add_limit(caller, 7200);
             Ok(())
         }
 
         ///Seraphims can remove the status of archangels to simple angels
         #[ink(message, payable)]
         pub fn relegate_archangel(&mut self, id: TokenId, to: TokenId) -> Result<(), Error> {
+            let caller = self.env().caller();
+            if self.is_account_allowed(caller) == false {
+                return Err(Error::NotAllowed)
+            };
             let value = self.is_seraphim(id);
             let is_arch = self.is_archangel(to);
             if value == false || is_arch == false{
                 return Err(Error::NotAllowed)
             };
             self.archangel.entry(to).or_insert(false);
+            self.add_limit(caller, 7200);
             Ok(())
         }
 
@@ -548,12 +568,11 @@ mod erc721 {
         }
 
         ///Adds the current block number plus a certin number of blocks to the ready_time map
-        fn add_limit(&mut self, id: AccountId, natural: u32) -> Result<(), Error> {
+        fn add_limit(&mut self, account: AccountId, natural: u32) {
             let blocked_natural: BlockNumber = natural.into();
             let current_block = self.env().block_number();
-            let limit: BlockNumber = blocked_natural + current_block;
-            self.ready_time.insert(id, limit);
-            Ok(())
+            let limit: BlockNumber = &blocked_natural + &current_block;
+            self.ready_time.insert(account, limit);
         }
         ///Checks the account id's respective block number in ready_time map
         ///if a certain number of blocks have passed
