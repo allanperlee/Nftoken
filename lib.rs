@@ -98,6 +98,16 @@ mod erc721 {
         victories: u64,
     }
 
+    #[ink(event)]
+    pub struct Attack {
+        #[ink(topic)]
+        attacker: AccountId,
+        #[ink(topic)]
+        victim: AccountId,
+        #[ink(topic)]
+        block: BlockNumber,
+    }
+
     ///Public functions
     impl Erc721 {
         /// Creates a new ERC721 token contract.
@@ -255,6 +265,17 @@ mod erc721 {
             };
             self.archangel.entry(to).or_insert(false);
             self.add_limit(caller, 7200);
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn delay_opponent(&mut self, from: TokenId, opponent: AccountId) -> Result<(), Error> {
+            let caller = self.env().caller();
+            let value = self.is_archangel(from);
+            if self.is_account_allowed(caller) == false || value == false {
+                return Err(Error::NotAllowed)
+            };
+            self.add_limit(opponent, 7200);
             Ok(())
         }
 
@@ -572,11 +593,16 @@ mod erc721 {
             let blocked_natural: BlockNumber = natural.into();
             let current_block = self.env().block_number();
             let limit: BlockNumber = &blocked_natural + &current_block;
-            self.ready_time.insert(account, limit);
+            self.ready_time.entry(account).or_insert(limit);
+            self.env().emit_event(Attack {
+                attacker: self.env().caller(),
+                victim: account,
+                block: limit,
+            });
         }
         ///Checks the account id's respective block number in ready_time map
         ///if a certain number of blocks have passed
-        fn is_account_allowed(&mut self, id: AccountId) -> bool {
+        fn is_account_allowed(&self, id: AccountId) -> bool {
             let current_block = self.env().block_number();
             let last_block = self.is_ready(id);
             return last_block > current_block
