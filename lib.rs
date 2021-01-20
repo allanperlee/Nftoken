@@ -201,7 +201,7 @@ mod erc721 {
             };
             self.add_loss(to);
             self.add_victory(from);
-            self.add_limit(caller, 7200);     
+            self.time_constrain(caller, 7200);     
             Ok(())
         }
 
@@ -228,7 +228,7 @@ mod erc721 {
                 token: id,
                 victories: vict_count,
             });
-            self.add_limit(caller, 7200);
+            self.time_constrain(caller, 7200);
             Ok(())
         }
 
@@ -238,16 +238,13 @@ mod erc721 {
             if self.is_account_allowed(caller) == false {
                 return Err(Error::NotAllowed)
             };
-            let vict_count = self.victories_count(id);
-            if vict_count < 64 {
-                return Err(Error::NotAllowed)
-            };
+            assert!(self.victories_count(id) > 63, "Must have at least 64 victories");
             let Self {
                 losses,
                 ..
             } = self;
             decrease_counter_of_tokenid(losses, id)?;
-            self.add_limit(caller, 7200);
+            self.time_constrain(caller, 7200);
             Ok(())
         }
 
@@ -258,24 +255,24 @@ mod erc721 {
             if self.is_account_allowed(caller) == false {
                 return Err(Error::NotAllowed)
             };
-            let value = self.is_seraphim(id);
-            let is_arch = self.is_archangel(to);
-            if value == false || is_arch == false{
+            assert!(self.is_seraphim(id) == true, "Only Seraphims are allowed");
+            if self.is_archangel(to) == false{
                 return Err(Error::NotAllowed)
             };
+
             self.archangel.entry(to).or_insert(false);
-            self.add_limit(caller, 7200);
+            self.time_constrain(caller, 7200);
             Ok(())
         }
 
         #[ink(message)]
         pub fn delay_opponent(&mut self, from: TokenId, opponent: AccountId) -> Result<(), Error> {
+            assert!(self.is_archangel(from) == true, "Only Archangels are allowed");
             let caller = self.env().caller();
-            let value = self.is_archangel(from);
-            if self.is_account_allowed(caller) == false || value == false {
+            if self.is_account_allowed(caller) == false {
                 return Err(Error::NotAllowed)
             };
-            self.add_limit(opponent, 7200);
+            self.time_constrain(opponent, 7200);
             Ok(())
         }
 
@@ -589,7 +586,7 @@ mod erc721 {
         }
 
         ///Adds the current block number plus a certin number of blocks to the ready_time map
-        fn add_limit(&mut self, account: AccountId, natural: u32) {
+        fn time_constrain(&mut self, account: AccountId, natural: u32) {
             let blocked_natural: BlockNumber = natural.into();
             let current_block = self.env().block_number();
             let limit: BlockNumber = &blocked_natural + &current_block;
@@ -607,6 +604,7 @@ mod erc721 {
             let last_block = self.is_ready(id);
             return last_block > current_block
         }
+
 
     }
 
