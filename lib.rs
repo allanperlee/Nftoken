@@ -43,7 +43,7 @@ mod erc721 {
         cherubim: StorageHashMap<TokenId, bool>,
         seraphim: StorageHashMap<TokenId, bool>,
         ///False if one account attacks the other
-        alliances: StorageHashMap<(AccountId, AccountId), bool>,
+        alliances: StorageHashMap<(TokenId, TokenId), bool>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq, Eq, Copy, Clone)]
@@ -246,7 +246,7 @@ mod erc721 {
                 losses,
                 ..
             } = self;
-            decrease_counter_of_tokenid(losses, id)?;
+            decrease_counter_of_tokenid(losses, &id)?;
             self.time_constrain(caller, 7200);
             Ok(())
         }
@@ -277,6 +277,11 @@ mod erc721 {
             };
             self.time_constrain(opponent, 7200);
             Ok(())
+        }
+
+        #[ink(message)]
+        pub fn is_allied(&self, angel: TokenId, _angel: TokenId) -> bool {
+            self.allied(angel, _angel)
         }
 
         /// Returns the approved account ID for this token if any.
@@ -507,6 +512,18 @@ mod erc721 {
             }
         }
 
+        fn ally(&mut self, angel: TokenId, an_ally: TokenId, approval: bool) -> Result<(), Error> {
+            let caller = self.env().caller();
+            assert!(self.is_account_allowed(caller) == true, "Must wait a few blocks more");
+            if self.is_dominion(angel) == false || self.is_dominion(an_ally) {
+                return Err(Error::NotAllowed)
+            };
+            match self.alliances.insert((angel, an_ally), approval) {
+                Some(_) => Err(Error::CannotInsert),
+                _ => Ok(()),
+            }   
+        }
+
         fn archangel(&self, token: TokenId) -> bool {
             *self.archangel.get(&token).unwrap_or(&false)
         }
@@ -548,6 +565,10 @@ mod erc721 {
         ///Returns the losses from an account
         fn losses_of_or_zero(&self, of: &TokenId) -> u64 {
             (*self.losses.get(of).unwrap_or(&0)).into()
+        }
+
+        fn allied(&self, angel: TokenId, _angel: TokenId) -> bool {
+            *self.alliances.get(&(angel, _angel)).unwrap_or(&false)
         }
 
         /// Gets an operator on other Account's behalf.
@@ -621,7 +642,7 @@ mod erc721 {
 
     fn decrease_counter_of_tokenid(
         hmap: &mut StorageHashMap<TokenId, u32>,
-        token: TokenId
+        token: &TokenId
     ) -> Result<(), Error> {
         let count = (*hmap).get_mut(&token).ok_or(Error::CannotFetchValue)?;
         *count -= 1;
