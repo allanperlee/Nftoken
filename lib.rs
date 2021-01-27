@@ -42,6 +42,8 @@ mod erc721 {
         throne: StorageHashMap<TokenId, bool>,
         cherubim: StorageHashMap<TokenId, bool>,
         seraphim: StorageHashMap<TokenId, bool>,
+        ///False if one account attacks the other
+        alliances: StorageHashMap<(AccountId, AccountId), bool>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq, Eq, Copy, Clone)]
@@ -129,6 +131,7 @@ mod erc721 {
                 throne: Default::default(),
                 cherubim: Default::default(),
                 seraphim: Default::default(),
+                alliances: Default::default(),
             }
         }
 
@@ -334,6 +337,7 @@ mod erc721 {
         #[ink(message, payable)]
         pub fn mint(&mut self, id: TokenId) -> Result<(), Error> {
             let caller = self.env().caller();
+            assert!(self.balance_of(caller) == 0, "Must own no tokens");
             self.add_token_to(&caller, id)?;
             self.env().emit_event(Transfer {
                 from: Some(AccountId::from([0x0; 32])),
