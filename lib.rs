@@ -592,8 +592,7 @@ mod erc721 {
         ///Adds the current block number plus a certin number of blocks to the ready_time map
         fn time_constrain(&mut self, account: AccountId, natural: u32) {
             let blocked_natural: BlockNumber = natural.into();
-            let current_block = self.env().block_number();
-            let limit: BlockNumber = &blocked_natural + &current_block;
+            let limit: BlockNumber = blocked_natural + self.env().block_number();
             self.ready_time.entry(account).or_insert(limit);
             self.env().emit_event(Attack {
                 attacker: self.env().caller(),
@@ -601,12 +600,11 @@ mod erc721 {
                 block: limit,
             });
         }
-        ///Checks the account id's respective block number in ready_time map
+        ///Checks the account id's respective block number, in ready_time map,
         ///if a certain number of blocks have passed
         fn is_account_allowed(&self, id: AccountId) -> bool {
-            let current_block = self.env().block_number();
             let last_block = self.is_ready(id);
-            return last_block > current_block
+            return last_block > self.env().block_number()
         }
 
 
