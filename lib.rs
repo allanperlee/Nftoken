@@ -110,6 +110,14 @@ mod erc721 {
         block: BlockNumber,
     }
 
+    #[ink(event)]
+    pub struct Alliance {
+        #[ink(topic)]
+        angel: TokenId,
+        #[ink(topic)]
+        ally: TokenId,
+    }
+
     ///Public functions
     impl Erc721 {
         /// Creates a new ERC721 token contract.
@@ -269,13 +277,24 @@ mod erc721 {
         }
 
         #[ink(message)]
-        pub fn delay_opponent(&mut self, from: TokenId, opponent: AccountId) -> Result<(), Error> {
+        pub fn delay_angel(&mut self, from: TokenId, opponent: AccountId) -> Result<(), Error> {
             assert!(self.is_archangel(from) == true, "Only Archangels are allowed");
             let caller = self.env().caller();
             if self.is_account_allowed(caller) == false {
                 return Err(Error::NotAllowed)
             };
             self.time_constrain(opponent, 7200);
+            Ok(())
+        }
+
+        #[ink(message, payable)]
+        pub fn form_alliance(&mut self, angel: TokenId, ally: TokenId) -> Result<(), Error> {
+            let caller = self.env().caller();
+            if self.is_account_allowed(caller) == false {
+                return Err(Error::NotAllowed)
+            };
+            self.ally(angel, ally, true)?;
+            self.time_constrain(caller, 7200);
             Ok(())
         }
 
@@ -512,15 +531,21 @@ mod erc721 {
             }
         }
 
+        ///Allows Dominions to form alliances by adding a tuple of two
+        ///angels -> bool
         fn ally(&mut self, angel: TokenId, an_ally: TokenId, approval: bool) -> Result<(), Error> {
             let caller = self.env().caller();
             assert!(self.is_account_allowed(caller) == true, "Must wait a few blocks more");
             if self.is_dominion(angel) == false || self.is_dominion(an_ally) {
                 return Err(Error::NotAllowed)
             };
+            self.env().emit_event(Alliance {
+                angel,
+                ally: an_ally,
+            });
             match self.alliances.insert((angel, an_ally), approval) {
                 Some(_) => Err(Error::CannotInsert),
-                _ => Ok(()),
+                None => Ok(()),
             }   
         }
 
