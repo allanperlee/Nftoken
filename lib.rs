@@ -284,6 +284,7 @@ mod erc721 {
                 return Err(Error::NotAllowed)
             };
             self.time_constrain(opponent, 7200);
+            self.time_constrain(caller, 3600);
             Ok(())
         }
 
@@ -295,6 +296,40 @@ mod erc721 {
             };
             self.ally(angel, ally, true)?;
             self.time_constrain(caller, 7200);
+            Ok(())
+        }
+
+        #[ink(message, payable)]
+        pub fn dissolve_alliance(&mut self, attacker: TokenId, victim: TokenId, ally: TokenId) -> Result<(), Error> {
+            let caller = self.env().caller();
+            if self.is_account_allowed(caller) == false {
+                return Err(Error::NotAllowed)
+            };
+            assert!(self.is_cherubim(attacker) == true, "Only Cherubs allowed");
+            self.ally(victim, ally, false)?;
+            self.time_constrain(caller, 7200);
+            Ok(())
+        }
+        
+        #[ink(message, payable)]
+        pub fn gangel_bangel(
+            &mut self,
+            attacker: TokenId, 
+            attacker_ally: TokenId, 
+            victim: TokenId) -> Result<(), Error> {
+                let caller = self.env().caller();
+                if self.is_account_allowed(caller) == false {
+                    return Err(Error::NotAllowed)
+                };
+                assert!(self.is_allied(attacker, attacker_ally) == true, "Only alliances allowed");
+                assert!(self.is_power(victim) != true, "Powers are immune");
+            self.add_loss(victim);
+            let Self {
+                victories,
+                ..
+            } = self;
+            decrease_counter_of_tokenid(victories, &victim)?;
+            self.time_constrain(caller, 14400);
             Ok(())
         }
 
@@ -531,7 +566,7 @@ mod erc721 {
             }
         }
 
-        ///Allows Dominions to form alliances by adding a tuple of two
+        ///Allows Dominions to form alliances by adding a tuple of
         ///angels -> bool
         fn ally(&mut self, angel: TokenId, an_ally: TokenId, approval: bool) -> Result<(), Error> {
             let caller = self.env().caller();
