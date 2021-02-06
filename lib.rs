@@ -397,8 +397,8 @@ mod erc721 {
         pub fn mint(&mut self) -> Result<(), Error> {
             let caller = self.env().caller();
             if self.balance_of(caller) > 0 {
-                return Err(Error::NotAllowed)
-            };
+                return Err(Error::NotAllowed);
+            }
             let id = self.token_owner.len();
             self.add_token_to(&caller, id)?;
             self.env().emit_event(Transfer {
@@ -733,6 +733,7 @@ mod erc721 {
             let accounts =
                 ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
                     .expect("Cannot get accounts");
+               
             // Create a new contract instance.
             let mut erc721 = Erc721::new();
             // Token 1 does not exists.
@@ -741,11 +742,15 @@ mod erc721 {
             assert_eq!(erc721.balance_of(accounts.alice), 0);
             // Create token Id 1.
             assert_eq!(erc721.mint(), Ok(()));
+            assert_eq!(erc721.mint(), Err(Error::NotAllowed));
             // Alice owns 1 token.
             assert_eq!(erc721.balance_of(accounts.alice), 1);
-            //Checking getter for credibility and the default bool, works as intended for token id 1
-            assert_eq!(erc721.token_owner.len(), 1);
             assert_eq!(erc721.owner_of(0), Some(accounts.alice));
+            assert_eq!(erc721.token_owner.len(), 1);
+            //implemented to check the id assignment upon minting passed
+            //assert_eq!(erc721.owner_of(0), Some(accounts.alice));
+            //assert_eq!(erc721.owner_of(1), Some(accounts.alice));
+
         }
 
         #[ink::test]
@@ -757,14 +762,16 @@ mod erc721 {
             let mut erc721 = Erc721::new();
             // Create token Id 0.
             assert_eq!(erc721.mint(), Ok(()));
+
             // The first Transfer event takes place
             assert_eq!(1, ink_env::test::recorded_events().count());
             // Alice owns 1 token.
             assert_eq!(erc721.balance_of(accounts.alice), 1);
             // Alice owns token Id 1.
             assert_eq!(erc721.owner_of(0), Some(accounts.alice));
+
             //Should not allow caller to mint twice 
-            assert_eq!(erc721.mint(), Err(Error::NotAllowed)) ;
+            //assert_eq!(erc721.mint(), Err(Error::NotAllowed));
         }
 
         #[ink::test]
