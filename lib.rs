@@ -9,6 +9,8 @@ mod erc721 {
         hashmap::Entry,
         HashMap as StorageHashMap,
     };
+
+    use ink_storage::Memory;
     use scale::{
         Decode,
         Encode,
@@ -44,6 +46,7 @@ mod erc721 {
         seraphim: StorageHashMap<TokenId, bool>,
         ///False if one account attacks the other
         alliances: StorageHashMap<(TokenId, TokenId), bool>,
+        angels: Memory<u32>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq, Eq, Copy, Clone)]
@@ -140,6 +143,7 @@ mod erc721 {
                 cherubim: Default::default(),
                 seraphim: Default::default(),
                 alliances: Default::default(),
+                angels: Default::default(),
             }
         }
 
@@ -202,6 +206,7 @@ mod erc721 {
         pub fn owner_of(&self, id: TokenId) -> Option<AccountId> {
             self.token_owner.get(&id).cloned()
         }
+
         
         ///Prototype for the actions a player can execute against another player
         #[ink(message, payable)]
@@ -692,6 +697,7 @@ mod erc721 {
         }
 
 
+
     }
 
     fn decrease_counter_of(
@@ -747,7 +753,7 @@ mod erc721 {
             assert_eq!(erc721.balance_of(accounts.alice), 1);
             assert_eq!(erc721.owner_of(0), Some(accounts.alice));
             assert_eq!(erc721.token_owner.len(), 1);
-            //implemented to check the id assignment upon minting passed
+            //implemented to check the id assignment upon minting- passed!
             //assert_eq!(erc721.owner_of(0), Some(accounts.alice));
             //assert_eq!(erc721.owner_of(1), Some(accounts.alice));
 
@@ -769,9 +775,8 @@ mod erc721 {
             assert_eq!(erc721.balance_of(accounts.alice), 1);
             // Alice owns token Id 1.
             assert_eq!(erc721.owner_of(0), Some(accounts.alice));
-
             //Should not allow caller to mint twice 
-            //assert_eq!(erc721.mint(), Err(Error::NotAllowed));
+            assert_eq!(erc721.mint(), Err(Error::NotAllowed));
         }
 
         #[ink::test]
