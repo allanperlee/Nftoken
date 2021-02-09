@@ -46,6 +46,7 @@ mod erc721 {
         seraphim: StorageHashMap<TokenId, bool>,
         ///False if one account attacks the other
         alliances: StorageHashMap<(TokenId, TokenId), bool>,
+        ///Experimenting...
         angels: Memory<u32>,
     }
 
@@ -145,6 +146,11 @@ mod erc721 {
                 alliances: Default::default(),
                 angels: Default::default(),
             }
+        }
+
+        #[ink(message)]
+        pub fn los_angeles(&self) -> u32 {
+            return *self.angels
         }
 
         /// Returns the balance of the owner.
