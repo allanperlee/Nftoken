@@ -47,7 +47,7 @@ mod erc721 {
         ///False if one account attacks the other
         alliances: StorageHashMap<(TokenId, TokenId), bool>,
         ///Experimenting...
-        angels: Memory<u32>,
+        angels: Memory<TokenId>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq, Eq, Copy, Clone)]
@@ -149,7 +149,7 @@ mod erc721 {
         }
 
         #[ink(message)]
-        pub fn los_angeles(&self) -> u32 {
+        pub fn los_angeles(&self) -> TokenId {
             return *self.angels
         }
 
@@ -226,6 +226,7 @@ mod erc721 {
             self.time_constrain(caller, 7200);     
             Ok(())
         }
+
 
         ///Token must contain more than 4 victories
         #[ink(message, payable)]
@@ -598,6 +599,7 @@ mod erc721 {
             }   
         }
 
+
         fn archangel(&self, token: TokenId) -> bool {
             *self.archangel.get(&token).unwrap_or(&false)
         }
@@ -678,6 +680,27 @@ mod erc721 {
             self.losses.insert(id, (losses_count + 1).try_into().unwrap());
             true
         }
+
+        fn improve_add_loss(&mut self, victim: &TokenId) -> bool {
+            let Self {
+                losses,
+                ..
+            } = self;
+            let entry = losses.entry(*victim);
+            increase_counter_of_tokenid(entry);
+            true
+        }
+
+        fn improve_add_victory(&mut self, victor: &TokenId) -> bool {
+            let Self {
+                victories,
+                ..
+            } = self;
+            let entry = victories.entry(*victor);
+            increase_counter_of_tokenid(entry);
+            true
+        }
+
         fn add_victory(&mut self, id: TokenId) -> bool {
             let victories_count = self.victories_count(id);
             self.victories.insert(id, (victories_count + 1).try_into().unwrap());
@@ -702,8 +725,6 @@ mod erc721 {
             return last_block > self.env().block_number()
         }
 
-
-
     }
 
     fn decrease_counter_of(
@@ -726,6 +747,10 @@ mod erc721 {
 
     /// Increase token counter from the `of` AccountId.
     fn increase_counter_of(entry: Entry<AccountId, u32>) {
+        entry.and_modify(|v| *v += 1).or_insert(1);
+    }
+
+    fn increase_counter_of_tokenid(entry: Entry<TokenId, u32>) {
         entry.and_modify(|v| *v += 1).or_insert(1);
     }
 
