@@ -15,7 +15,6 @@ mod erc721 {
         Decode,
         Encode,
     };
-    use core::convert::TryInto;
 
     pub type TokenId = u32;
 
@@ -221,9 +220,21 @@ mod erc721 {
             if self.is_account_allowed(caller) == false {
                 return Err(Error::NotAllowed)
             };
-            self.add_loss(to);
-            self.add_victory(from);
+            self.add_loss(&to);
+            self.add_victory(&from);
             self.time_constrain(caller, 7200);     
+            Ok(())
+        }
+
+        #[ink(message, payable)]
+        pub fn improved_attack(&mut self, attacker: TokenId, victim: TokenId) -> Result<(), Error> {
+            let caller = self.env().caller();
+            if self.is_account_allowed(caller) == false {
+                return Err(Error::NotAllowed)
+            };
+            self.add_loss(&victim);
+            self.add_victory(&attacker);
+            self.time_constrain(caller, 7200);
             Ok(())
         }
 
@@ -335,7 +346,7 @@ mod erc721 {
                 };
                 assert!(self.is_allied(attacker, attacker_ally) == true, "Only alliances allowed");
                 assert!(self.is_power(victim) != true, "Powers are immune");
-            self.add_loss(victim);
+            self.add_loss(&victim);
             let Self {
                 victories,
                 ..
@@ -675,13 +686,7 @@ mod erc721 {
         
         ///Will be inherited inside another function that executes this stat change
         ///along with add_victory
-        fn add_loss(&mut self, id: TokenId) -> bool {
-            let losses_count = self.losses_count(id);
-            self.losses.insert(id, (losses_count + 1).try_into().unwrap());
-            true
-        }
-
-        fn improve_add_loss(&mut self, victim: &TokenId) -> bool {
+        fn add_loss(&mut self, victim: &TokenId) -> bool {
             let Self {
                 losses,
                 ..
@@ -691,19 +696,13 @@ mod erc721 {
             true
         }
 
-        fn improve_add_victory(&mut self, victor: &TokenId) -> bool {
+        fn add_victory(&mut self, victor: &TokenId) -> bool {
             let Self {
                 victories,
                 ..
             } = self;
             let entry = victories.entry(*victor);
             increase_counter_of_tokenid(entry);
-            true
-        }
-
-        fn add_victory(&mut self, id: TokenId) -> bool {
-            let victories_count = self.victories_count(id);
-            self.victories.insert(id, (victories_count + 1).try_into().unwrap());
             true
         }
 
