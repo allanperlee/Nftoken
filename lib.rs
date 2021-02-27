@@ -22,6 +22,8 @@ mod erc721 {
     pub struct Erc721 {
         /// Mapping from token to owner.
         token_owner: StorageHashMap<TokenId, AccountId>,
+        ///Mapping from owner to token
+        owner_to_token: StorageHashMap<AccountId, TokenId>,
         /// Mapping from token to approvals users.
         token_approvals: StorageHashMap<TokenId, AccountId>,
         /// Mapping from owner to number of owned token.
@@ -128,6 +130,7 @@ mod erc721 {
         pub fn new() -> Self {
             Self {
                 token_owner: Default::default(),
+                owner_to_token: Default::default(),
                 token_approvals: Default::default(),
                 owned_tokens_count: Default::default(),
                 operator_approvals: Default::default(),
